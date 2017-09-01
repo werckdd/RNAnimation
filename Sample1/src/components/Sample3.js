@@ -8,13 +8,12 @@ export default class Sample3 extends Component {
     constructor() {
         super()
         this.state = {
-            animationValue: new Animated.ValueXY()
+            animationValue: new Animated.ValueXY({ x: 0, y: 0 }),
+            bg:'#333'
         }
     }
 
     componentWillMount() {
-        this._value={x:0,y:0}
-        this.state.animationValue.addListener(value => this._value = value)
         this.panResponder = PanResponder.create({
             // 要求成为响应者：
             onStartShouldSetPanResponder: (evt, gestureState) => true,
@@ -23,26 +22,31 @@ export default class Sample3 extends Component {
             onMoveShouldSetPanResponderCapture: (evt, gestureState) => true,
 
             onPanResponderGrant: (evt, gestureState) => {
-                // 开始手势操作。给用户一些视觉反馈，让他们知道发生了什么事情！
-                console.log(`parent start getValue ${this.state.animationValue.getLayout}`)
+                
+                //如果你设置了offset为100，而Animated.Value的值为50，那么动画执行的时候使用的值是150.
+                //每次都会重新从屏幕中间开始移动，offset可以保存上次移动的距离，这样可以保证下次从上次开始的地方开始移动
                 this.state.animationValue.setOffset({
-                    x: this._value.x,
-                    y:this._value.y
+                    x: this.state.animationValue.x._value,
+                    y: this.state.animationValue.y._value
                 })
-                this.state.animationValue.setValue({x:0,y:0})
+                this.state.animationValue.setValue({ x: 0, y: 0 }),
+                this.setState({bg:'red'})    
             },
             onPanResponderMove: (evt, gestureState) => {
                 this.state.animationValue.setValue({ x: gestureState.dx, y: gestureState.dy })
-                console.log("parent move")
+                console.log(`parent move getValue ${JSON.stringify(this.state.animationValue.x._value)}`)
             },
             onPanResponderTerminationRequest: (evt, gestureState) => true,
             onPanResponderRelease: (evt, gestureState) => {
-                console.log("parent end")
+                /**
+                 * flattenOffset() {
+                 *       this._value += this._offset;
+                 *       this._offset = 0;
+                 *      }
+                 */
                 this.state.animationValue.flattenOffset()
-                Animated.decay(this.animatedValue, {
-                    deceleration: 0.997,
-                    velocity: { x: gestureState.vx, y: gestureState.vy }
-                }).start();
+                this.setState({ bg: '#333' })  
+                
             },
             onPanResponderTerminate: (evt, gestureState) => {
                 // 另一个组件已经成为了新的响应者，所以当前手势将被取消。
@@ -57,7 +61,8 @@ export default class Sample3 extends Component {
 
     render() {
         const animationStyle = {
-            transform: this.state.animationValue.getTranslateTransform()
+            transform: this.state.animationValue.getTranslateTransform(),
+            backgroundColor:this.state.bg
         }
         return (
             <View style={styles.container}>
@@ -77,7 +82,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     box: {
-        backgroundColor: "#333",
         width: 100,
         height: 50,
         alignItems: "center",
