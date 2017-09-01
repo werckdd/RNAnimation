@@ -9,6 +9,7 @@ export default class Sample3 extends Component {
         super()
         this.state = {
             animationValue: new Animated.ValueXY({ x: 0, y: 0 }),
+            scale:new Animated.Value(1),
             bg:'#333'
         }
     }
@@ -24,13 +25,20 @@ export default class Sample3 extends Component {
             onPanResponderGrant: (evt, gestureState) => {
                 
                 //如果你设置了offset为100，而Animated.Value的值为50，那么动画执行的时候使用的值是150.
-                //每次都会重新从屏幕中间开始移动，offset可以保存上次移动的距离，这样可以保证下次从上次开始的地方开始移动
+                //每次re-rend都会重新从屏幕中间开始移动，offset可以保存上次移动的距离，这样可以保证下次从上次开始的地方开始移动
                 this.state.animationValue.setOffset({
                     x: this.state.animationValue.x._value,
                     y: this.state.animationValue.y._value
                 })
                 this.state.animationValue.setValue({ x: 0, y: 0 }),
-                this.setState({bg:'red'})    
+                this.setState({ bg: 'red' })    
+                
+                Animated.spring(this.state.scale, {
+                    toValue: 1.3,
+                    friction: 3,
+                    tension:40
+                }).start()
+                
             },
             onPanResponderMove: (evt, gestureState) => {
                 this.state.animationValue.setValue({ x: gestureState.dx, y: gestureState.dy })
@@ -46,7 +54,11 @@ export default class Sample3 extends Component {
                  */
                 this.state.animationValue.flattenOffset()
                 this.setState({ bg: '#333' })  
-                
+                Animated.spring(this.state.scale, {
+                    toValue: 1,
+                    friction: 3,
+                    tension: 40
+                }).start()
             },
             onPanResponderTerminate: (evt, gestureState) => {
                 // 另一个组件已经成为了新的响应者，所以当前手势将被取消。
@@ -61,8 +73,12 @@ export default class Sample3 extends Component {
 
     render() {
         const animationStyle = {
-            transform: this.state.animationValue.getTranslateTransform(),
-            backgroundColor:this.state.bg
+            transform: [
+                { translateX: this.state.animationValue.x },
+                { translateY: this.state.animationValue.y },
+                {scale:this.state.scale}],
+            backgroundColor: this.state.bg
+            
         }
         return (
             <View style={styles.container}>
